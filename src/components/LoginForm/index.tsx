@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -23,46 +22,30 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { formSchema } from '@/lib/validation/register'
-import { registerAction } from '@/lib/actions'
+import { formSchema } from '@/lib/validation/login'
+import { loginWithCredentialsAction } from '@/lib/actions'
 
-const RegisterForm = (): JSX.Element => {
+const LoginForm = (): JSX.Element => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
       password: '',
-      passwordConfirm: '',
     },
   })
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-    const response = await registerAction(data)
+    const response = await loginWithCredentialsAction(data)
 
     if (response?.error) {
       form.setError('email', { message: response.message })
     }
   }
-
-  if (form.formState.isSubmitSuccessful) {
-    return (
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>Your account has been created!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button asChild className="w-full">
-            <Link href="/login">Login to your account</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Register</CardTitle>
-        <CardDescription>Register for a new account.</CardDescription>
+        <CardTitle>Login</CardTitle>
+        <CardDescription>Login to your account.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -78,7 +61,7 @@ const RegisterForm = (): JSX.Element => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} autoComplete="email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -95,7 +78,7 @@ const RegisterForm = (): JSX.Element => {
                       <Input
                         {...field}
                         type="password"
-                        autoComplete="new-password"
+                        autoComplete="current-password"
                       />
                     </FormControl>
                     <FormMessage />
@@ -103,25 +86,7 @@ const RegisterForm = (): JSX.Element => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="passwordConfirm"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password confirm</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="password"
-                        autoComplete="new-password"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit">Register</Button>
+              <Button type="submit">Login</Button>
             </fieldset>
           </form>
         </Form>
@@ -130,4 +95,4 @@ const RegisterForm = (): JSX.Element => {
   )
 }
 
-export default RegisterForm
+export default LoginForm

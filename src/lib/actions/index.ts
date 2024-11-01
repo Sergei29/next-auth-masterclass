@@ -4,7 +4,8 @@ import { z } from 'zod'
 import { hash } from 'bcryptjs'
 import { NeonDbError } from '@neondatabase/serverless'
 
-import { formSchema } from '@/lib/validation/register'
+import { formSchema as formSchemaRegister } from '@/lib/validation/register'
+import { formSchema as formSchemaLogin } from '@/lib/validation/login'
 import { users } from '@/lib/db/schema'
 import { db } from '@/lib/db'
 
@@ -31,10 +32,10 @@ const getErrorMessage = (err: unknown) => {
 }
 
 export const registerAction = async (
-  formValues: z.infer<typeof formSchema>,
+  formValues: z.infer<typeof formSchemaRegister>,
 ) => {
   try {
-    const validation = formSchema.safeParse(formValues)
+    const validation = formSchemaRegister.safeParse(formValues)
 
     if (!validation.success) {
       throw new Error(
@@ -47,6 +48,28 @@ export const registerAction = async (
       email: validation.data.email,
       password: hashedPassword,
     })
+  } catch (err) {
+    return {
+      error: true,
+      message: getErrorMessage(err),
+    }
+  }
+}
+
+export const loginWithCredentialsAction = async (
+  formValues: z.infer<typeof formSchemaLogin>,
+) => {
+  try {
+    const validation = formSchemaLogin.safeParse(formValues)
+
+    if (!validation.success) {
+      throw new Error(
+        validation.error.issues[0].message ?? 'Login error occurred',
+      )
+    }
+    console.log('login action: ', validation.data)
+
+    // call nextAuth() > find user & verify pw match
   } catch (err) {
     return {
       error: true,
