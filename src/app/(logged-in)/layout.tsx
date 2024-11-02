@@ -1,13 +1,12 @@
 import React from 'react'
 import LogoutButton from '@/components/LogoutButton'
-// import { auth } from '@/auth'
 import Link from 'next/link'
 
 interface Props {
   children: React.ReactNode
 }
 
-const LoggedInLayout = ({ children }: Props) => {
+const LoggedInLayout = async ({ children }: Props) => {
   return (
     <div className="min-h-screen flex flex-col">
       <nav className="bg-gray-200 flex justify-between items-center p-4">
