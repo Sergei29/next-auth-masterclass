@@ -1,15 +1,16 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -22,6 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Button } from '@/components/ui/button'
 import { formSchema } from '@/lib/validation/login'
 import { loginWithCredentialsAction } from '@/lib/actions'
 
@@ -38,7 +40,7 @@ const LoginForm = (): JSX.Element => {
     const response = await loginWithCredentialsAction(data)
 
     if (response?.error) {
-      form.setError('email', { message: response.message })
+      form.setError('root', { message: response.message })
     }
   }
   return (
@@ -86,11 +88,28 @@ const LoginForm = (): JSX.Element => {
                 )}
               />
 
+              {form.formState.errors.root?.message && (
+                <FormMessage>{form.formState.errors.root.message}</FormMessage>
+              )}
               <Button type="submit">Login</Button>
             </fieldset>
           </form>
         </Form>
       </CardContent>
+      <CardFooter className="flex-col gap-2 text-muted-foreground text-xs">
+        <div className="flex gap-1 justify-center">
+          <p>Don&apos;t have an account?</p>
+          <Link href="/register" className="underline">
+            Register
+          </Link>
+        </div>
+        <div className="flex gap-1 justify-center">
+          <p>Forgot password?</p>
+          <Link href="/password-reset" className="underline">
+            Reset my password
+          </Link>
+        </div>
+      </CardFooter>
     </Card>
   )
 }

@@ -3,10 +3,14 @@
 import { z } from 'zod'
 import { hash } from 'bcryptjs'
 import { NeonDbError } from '@neondatabase/serverless'
+import { redirect } from 'next/navigation'
+
+import type { AuthError } from 'next-auth'
 
 import { formSchema as formSchemaRegister } from '@/lib/validation/register'
 import { formSchema as formSchemaLogin } from '@/lib/validation/login'
 import { users } from '@/lib/db/schema'
+import { signIn, signOut } from '@/auth'
 import { db } from '@/lib/db'
 
 /**
@@ -26,6 +30,11 @@ const getErrorMessage = (err: unknown) => {
   if (err instanceof NeonDbError && err.code) {
     const code = err.code
     message = pgError[code] || err.detail || 'Registration error occurred'
+  }
+
+  if ((err as AuthError).cause) {
+    message =
+      (err as AuthError).cause?.err?.message || 'NextAuth error occurred'
   }
 
   return message
@@ -67,13 +76,17 @@ export const loginWithCredentialsAction = async (
         validation.error.issues[0].message ?? 'Login error occurred',
       )
     }
-    console.log('login action: ', validation.data)
-
-    // call nextAuth() > find user & verify pw match
+    const { email, password } = validation.data
+    await signIn('credentials', { email, password, redirect: false })
   } catch (err) {
     return {
       error: true,
       message: getErrorMessage(err),
     }
   }
+  redirect('/my-account')
+}
+
+export const logoutAction = async () => {
+  await signOut()
 }

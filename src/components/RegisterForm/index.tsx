@@ -6,15 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import {
   Form,
   FormControl,
@@ -23,6 +22,8 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { formSchema } from '@/lib/validation/register'
 import { registerAction } from '@/lib/actions'
 
@@ -126,6 +127,15 @@ const RegisterForm = (): JSX.Element => {
           </form>
         </Form>
       </CardContent>
+
+      <CardFooter className="flex-col gap-2 text-muted-foreground text-xs">
+        <div className="flex gap-1 justify-center">
+          <p>Already have an account?</p>
+          <Link href="/login" className="underline">
+            Login
+          </Link>
+        </div>
+      </CardFooter>
     </Card>
   )
 }
