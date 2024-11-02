@@ -41,4 +41,27 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+  /**
+   * @description Makes a lot more sense that we actually store the ID as part
+   * of the JWT token, which handles the user's logged in session.
+   * Now there's 2 callbacks we need to add.
+   */
+  callbacks: {
+    /**
+     * @description The first is JWT. And this is going to manipulate our JWT token. So it's here where we're going to add the user ID to the JWT token.
+     */
+    jwt({ token, user }) {
+      if (user) {
+        token.id = user.id
+      }
+      return token
+    },
+    /**
+     * @description And also we want to add a session callback. So again exactly the same thing. So we want to set the session user ID equal to the token ID.
+     */
+    session({ session, token }) {
+      session.user.id = token.id as string
+      return session
+    },
+  },
 })
