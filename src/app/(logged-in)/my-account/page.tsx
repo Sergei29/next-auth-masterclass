@@ -1,4 +1,4 @@
-const Page = async () => {
+const AccountPage = async () => {
   return (
     <>
       <h1 className="text-3xl font-bold underline text-center">my account</h1>
@@ -6,4 +6,4 @@ const Page = async () => {
   )
 }
 
-export default Page
+export default AccountPage
