@@ -1,7 +1,6 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -9,10 +8,9 @@ import { z } from 'zod'
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
@@ -26,34 +24,84 @@ import {
 import TogglePassword from '@/components/TogglePassword'
 import ResetButton from '@/components/ResetButton'
 import { Button } from '@/components/ui/button'
-import { loginWithCredentialsAction } from '@/lib/actions'
-import { formSchema } from '@/lib/validation/login'
-import { usePasswordField } from '@/lib/hooks'
+import { passwordMatchSchema as formSchema } from '@/lib/validation/register'
+import { passwordUpdateAction } from '@/lib/actions'
+import { usePasswordField, useToast } from '@/lib/hooks'
+import Link from 'next/link'
 
-const LoginForm = (): JSX.Element => {
+export const PageNotValidMessage = () => {
+  return (
+    <Card className="w-[350px]">
+      <CardHeader>
+        <CardTitle>The page is not valid</CardTitle>
+        <CardDescription>
+          Your password link is not valid or has expired.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button asChild className="w-full">
+          <Link
+            href={{
+              pathname: '/password-reset',
+            }}
+            className="text-xs"
+          >
+            Request another password reset link
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+interface Props {
+  token: string
+}
+
+const UpdatePasswordForm = ({ token }: Props): JSX.Element => {
+  const { toast } = useToast()
   const [fieldType, toggleType] = usePasswordField()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
       password: '',
+      passwordConfirm: '',
     },
   })
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-    const response = await loginWithCredentialsAction(data)
-
+    const response = await passwordUpdateAction(token, data)
     if (response?.error) {
       form.setError('root', { message: response.message })
+    } else {
+      toast({
+        title: 'Password changed.',
+        description: 'Your password has been updated',
+        className: 'bg-green-500 text-white',
+      })
+      form.reset()
     }
   }
 
-  const email = form.getValues('email')
+  if (form.formState.isSubmitSuccessful) {
+    return (
+      <Card className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Password changed</CardTitle>
+          <CardDescription>Please login with your new password</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild className="w-full">
+            <Link href="/login">Login yo your account</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>Login to your account.</CardDescription>
+        <CardTitle>Update password</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -64,12 +112,23 @@ const LoginForm = (): JSX.Element => {
             >
               <FormField
                 control={form.control}
-                name="email"
+                name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>New password</FormLabel>
                     <FormControl>
-                      <Input {...field} autoComplete="email" />
+                      <span className="relative">
+                        <Input
+                          {...field}
+                          type={fieldType}
+                          autoComplete="new-password"
+                        />
+                        <TogglePassword
+                          isVisible={fieldType === 'text'}
+                          onClick={toggleType}
+                          className="absolute top-8 right-2"
+                        />
+                      </span>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -78,16 +137,16 @@ const LoginForm = (): JSX.Element => {
 
               <FormField
                 control={form.control}
-                name="password"
+                name="passwordConfirm"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Confirm new password</FormLabel>
                     <FormControl>
                       <span className="relative">
                         <Input
                           {...field}
                           type={fieldType}
-                          autoComplete="current-password"
+                          autoComplete="new-password"
                         />
                         <TogglePassword
                           isVisible={fieldType === 'text'}
@@ -104,34 +163,14 @@ const LoginForm = (): JSX.Element => {
               {form.formState.errors.root?.message && (
                 <FormMessage>{form.formState.errors.root.message}</FormMessage>
               )}
-              <Button type="submit">Login</Button>
+              <Button type="submit">Update password</Button>
               <ResetButton onClick={() => form.reset()} />
             </fieldset>
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-muted-foreground text-xs">
-        <div className="flex gap-1 justify-center">
-          <p>Don&apos;t have an account?</p>
-          <Link href="/register" className="underline">
-            Register
-          </Link>
-        </div>
-        <div className="flex gap-1 justify-center">
-          <p>Forgot password?</p>
-          <Link
-            href={{
-              pathname: '/password-reset',
-              query: email ? { email } : null,
-            }}
-            className="underline"
-          >
-            Reset my password
-          </Link>
-        </div>
-      </CardFooter>
     </Card>
   )
 }
 
-export default LoginForm
+export default UpdatePasswordForm

@@ -9,7 +9,10 @@ export default auth((req) => {
     req.nextUrl.pathname === '/my-account' ||
     req.nextUrl.pathname === '/change-password'
   const isLoginPage =
-    req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/register'
+    req.nextUrl.pathname === '/login' ||
+    req.nextUrl.pathname === '/register' ||
+    req.nextUrl.pathname === '/password-reset' ||
+    req.nextUrl.pathname === '/update-password'
 
   if (!isAuthenticated && isPrivatePage) {
     const newUrl = new URL('/login', req.nextUrl.origin)

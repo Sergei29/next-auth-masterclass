@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -23,37 +24,50 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import TogglePassword from '@/components/TogglePassword'
-import ResetButton from '@/components/ResetButton'
 import { Button } from '@/components/ui/button'
-import { loginWithCredentialsAction } from '@/lib/actions'
-import { formSchema } from '@/lib/validation/login'
-import { usePasswordField } from '@/lib/hooks'
+import { formSchema } from '@/lib/validation/resetPassword'
+import { passwordResetAction } from '@/lib/actions'
 
-const LoginForm = (): JSX.Element => {
-  const [fieldType, toggleType] = usePasswordField()
+const ResetPasswordForm = (): JSX.Element => {
+  const searchParams = useSearchParams()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: searchParams.get('email') ?? '',
     },
   })
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-    const response = await loginWithCredentialsAction(data)
-
+    const response = await passwordResetAction(data)
     if (response?.error) {
       form.setError('root', { message: response.message })
     }
   }
 
-  const email = form.getValues('email')
+  if (form.formState.isSubmitSuccessful) {
+    return (
+      <Card className="w-[350px]">
+        <CardHeader>
+          <CardTitle> 📧 Email sent</CardTitle>
+          <CardDescription>
+            If you have an account with us - you will receive a password reset
+            email at{' '}
+            <span className="p-0.5 rounded-sm bg-slate-100 text-primary">
+              {form.getValues('email')}
+            </span>
+            .
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Login</CardTitle>
-        <CardDescription>Login to your account.</CardDescription>
+        <CardTitle>Forgot password</CardTitle>
+        <CardDescription>
+          Enter your email address to reset your password.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -76,57 +90,25 @@ const LoginForm = (): JSX.Element => {
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <span className="relative">
-                        <Input
-                          {...field}
-                          type={fieldType}
-                          autoComplete="current-password"
-                        />
-                        <TogglePassword
-                          isVisible={fieldType === 'text'}
-                          onClick={toggleType}
-                          className="absolute top-8 right-2"
-                        />
-                      </span>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {form.formState.errors.root?.message && (
                 <FormMessage>{form.formState.errors.root.message}</FormMessage>
               )}
-              <Button type="submit">Login</Button>
-              <ResetButton onClick={() => form.reset()} />
+              <Button type="submit">Reset my password</Button>
             </fieldset>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-muted-foreground text-xs">
         <div className="flex gap-1 justify-center">
-          <p>Don&apos;t have an account?</p>
-          <Link href="/register" className="underline">
-            Register
+          <p>Remember your password?</p>
+          <Link href="/login" className="underline">
+            Login
           </Link>
         </div>
         <div className="flex gap-1 justify-center">
-          <p>Forgot password?</p>
-          <Link
-            href={{
-              pathname: '/password-reset',
-              query: email ? { email } : null,
-            }}
-            className="underline"
-          >
-            Reset my password
+          <p>Don&apos;t have an account?</p>
+          <Link href="/register" className="underline">
+            Register
           </Link>
         </div>
       </CardFooter>
@@ -134,4 +116,4 @@ const LoginForm = (): JSX.Element => {
   )
 }
 
-export default LoginForm
+export default ResetPasswordForm
