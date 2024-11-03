@@ -1,16 +1,18 @@
 'use server'
 
 import { z } from 'zod'
-import { hash } from 'bcryptjs'
+import { compare, hash } from 'bcryptjs'
 import { NeonDbError } from '@neondatabase/serverless'
 import { redirect } from 'next/navigation'
+import { eq } from 'drizzle-orm'
 
 import type { AuthError } from 'next-auth'
 
+import { formSchema as formSchemaChangePw } from '@/lib/validation/changePassword'
 import { formSchema as formSchemaRegister } from '@/lib/validation/register'
 import { formSchema as formSchemaLogin } from '@/lib/validation/login'
 import { users } from '@/lib/db/schema'
-import { signIn, signOut } from '@/auth'
+import { signIn, signOut, auth } from '@/auth'
 import { db } from '@/lib/db'
 
 /**
@@ -89,4 +91,51 @@ export const loginWithCredentialsAction = async (
 
 export const logoutAction = async () => {
   await signOut()
+}
+
+export const changePasswordAction = async (
+  formValues: z.infer<typeof formSchemaChangePw>,
+) => {
+  try {
+    const session = await auth()
+    if (!session) {
+      throw new Error('Unauthenticated')
+    }
+    const validation = formSchemaChangePw.safeParse(formValues)
+
+    if (!validation.success) {
+      throw new Error(
+        validation.error.issues[0].message ?? 'Change password error occurred',
+      )
+    }
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, session.user?.email as string))
+    if (!user) {
+      throw new Error('User not found.')
+    }
+
+    const isPasswordCorrect = await compare(
+      validation.data.currentPassword as string,
+      user.password,
+    )
+
+    if (!isPasswordCorrect) {
+      throw new Error('Unauthorized.')
+    }
+
+    const newPasswordHash = await hash(validation.data.password, 10)
+    await db
+      .update(users)
+      .set({
+        password: newPasswordHash,
+      })
+      .where(eq(users.email, session.user?.email as string))
+  } catch (err) {
+    return {
+      error: true,
+      message: getErrorMessage(err),
+    }
+  }
 }

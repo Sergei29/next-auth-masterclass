@@ -1,9 +1,7 @@
+import ChangePasswordForm from '@/components/ChangePasswordForm'
+
 const ChangePwPage = async () => {
-  return (
-    <>
-      <h1 className="text-3xl font-bold underline text-center">Change PW</h1>
-    </>
-  )
+  return <ChangePasswordForm />
 }
 
 export default ChangePwPage

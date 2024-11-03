@@ -1,19 +1,12 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import {
   Form,
   FormControl,
@@ -25,49 +18,42 @@ import {
 import TogglePassword from '@/components/TogglePassword'
 import ResetButton from '@/components/ResetButton'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { formSchema } from '@/lib/validation/register'
-import { usePasswordField } from '@/lib/hooks'
-import { registerAction } from '@/lib/actions'
+import { formSchema } from '@/lib/validation/changePassword'
+import { usePasswordField, useToast } from '@/lib/hooks'
+import { changePasswordAction } from '@/lib/actions'
 
-const RegisterForm = (): JSX.Element => {
+const ChangePasswordForm = (): JSX.Element => {
+  const { toast } = useToast()
   const [fieldType, toggleType] = usePasswordField()
+  const [newFieldType, toggleNewType] = usePasswordField()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
+      currentPassword: '',
       password: '',
       passwordConfirm: '',
     },
   })
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-    const response = await registerAction(data)
+    const response = await changePasswordAction(data)
 
     if (response?.error) {
-      form.setError('email', { message: response.message })
+      form.setError('root', { message: response.message })
+    } else {
+      toast({
+        title: 'Password changed.',
+        description: 'Your password has been updated',
+        className: 'bg-green-500 text-white',
+      })
+      form.reset()
     }
   }
 
-  if (form.formState.isSubmitSuccessful) {
-    return (
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>Your account has been created!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Button asChild className="w-full">
-            <Link href="/login">Login to your account</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    )
-  }
   return (
     <Card className="w-[350px]">
       <CardHeader>
-        <CardTitle>Register</CardTitle>
-        <CardDescription>Register for a new account.</CardDescription>
+        <CardTitle>Change password</CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -78,12 +64,23 @@ const RegisterForm = (): JSX.Element => {
             >
               <FormField
                 control={form.control}
-                name="email"
+                name="currentPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Current password</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <span className="relative">
+                        <Input
+                          {...field}
+                          type={fieldType}
+                          autoComplete="current-password"
+                        />
+                        <TogglePassword
+                          isVisible={fieldType === 'text'}
+                          onClick={toggleType}
+                          className="absolute top-8 right-2"
+                        />
+                      </span>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -95,17 +92,17 @@ const RegisterForm = (): JSX.Element => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>New password</FormLabel>
                     <FormControl>
                       <span className="relative">
                         <Input
                           {...field}
-                          type={fieldType}
+                          type={newFieldType}
                           autoComplete="new-password"
                         />
                         <TogglePassword
-                          isVisible={fieldType === 'text'}
-                          onClick={toggleType}
+                          isVisible={newFieldType === 'text'}
+                          onClick={toggleNewType}
                           className="absolute top-8 right-2"
                         />
                       </span>
@@ -120,17 +117,17 @@ const RegisterForm = (): JSX.Element => {
                 name="passwordConfirm"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password confirm</FormLabel>
+                    <FormLabel>Confirm new password</FormLabel>
                     <FormControl>
                       <span className="relative">
                         <Input
                           {...field}
-                          type={fieldType}
+                          type={newFieldType}
                           autoComplete="new-password"
                         />
                         <TogglePassword
-                          isVisible={fieldType === 'text'}
-                          onClick={toggleType}
+                          isVisible={newFieldType === 'text'}
+                          onClick={toggleNewType}
                           className="absolute top-8 right-2"
                         />
                       </span>
@@ -140,23 +137,17 @@ const RegisterForm = (): JSX.Element => {
                 )}
               />
 
-              <Button type="submit">Register</Button>
+              {form.formState.errors.root?.message && (
+                <FormMessage>{form.formState.errors.root.message}</FormMessage>
+              )}
+              <Button type="submit">Change password</Button>
               <ResetButton onClick={() => form.reset()} />
             </fieldset>
           </form>
         </Form>
       </CardContent>
-
-      <CardFooter className="flex-col gap-2 text-muted-foreground text-xs">
-        <div className="flex gap-1 justify-center">
-          <p>Already have an account?</p>
-          <Link href="/login" className="underline">
-            Login
-          </Link>
-        </div>
-      </CardFooter>
     </Card>
   )
 }
 
-export default RegisterForm
+export default ChangePasswordForm

@@ -23,11 +23,15 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import TogglePassword from '@/components/TogglePassword'
+import ResetButton from '@/components/ResetButton'
 import { Button } from '@/components/ui/button'
-import { formSchema } from '@/lib/validation/login'
 import { loginWithCredentialsAction } from '@/lib/actions'
+import { formSchema } from '@/lib/validation/login'
+import { usePasswordField } from '@/lib/hooks'
 
 const LoginForm = (): JSX.Element => {
+  const [fieldType, toggleType] = usePasswordField()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -77,11 +81,18 @@ const LoginForm = (): JSX.Element => {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        type="password"
-                        autoComplete="current-password"
-                      />
+                      <span className="relative">
+                        <Input
+                          {...field}
+                          type={fieldType}
+                          autoComplete="current-password"
+                        />
+                        <TogglePassword
+                          isVisible={fieldType === 'text'}
+                          onClick={toggleType}
+                          className="absolute top-8 right-2"
+                        />
+                      </span>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -92,6 +103,7 @@ const LoginForm = (): JSX.Element => {
                 <FormMessage>{form.formState.errors.root.message}</FormMessage>
               )}
               <Button type="submit">Login</Button>
+              <ResetButton onClick={() => form.reset()} />
             </fieldset>
           </form>
         </Form>

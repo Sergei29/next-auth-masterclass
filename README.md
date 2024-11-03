@@ -1,3 +1,21 @@
+## About
+
+Authentication feature implementation in the Next.js application
+
+- sign up ( credentials )
+- sign in ( credentials )
+- change password
+- forgotten password
+- pages protection by middleware
+
+## Tech stack
+
+- Next.js@latest (15 at this time) / typescript
+- Auth.js, latest next-auth v5
+- zod, react-hook-form
+- Chadcn UI, tailwind scc
+- Drizzle ORM, Postgres db hosted on Neon.
+
 ## Database
 
 Hosted at [`NEON / next_auth_masterclass`](https://console.neon.tech/)
