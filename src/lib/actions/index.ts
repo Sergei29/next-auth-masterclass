@@ -1,25 +1,26 @@
 'use server'
 
-import { z } from 'zod'
-import { compare, hash } from 'bcryptjs'
 import { NeonDbError } from '@neondatabase/serverless'
 import { redirect } from 'next/navigation'
+import { compare, hash } from 'bcryptjs'
+import { randomBytes } from 'crypto'
 import { eq } from 'drizzle-orm'
+import { z } from 'zod'
 
 import type { AuthError } from 'next-auth'
 
-import { formSchema as formSchemaChangePw } from '@/lib/validation/changePassword'
-import { formSchema as formSchemaResetPw } from '@/lib/validation/resetPassword'
 import {
   formSchema as formSchemaRegister,
   passwordMatchSchema,
 } from '@/lib/validation/register'
+import { formSchema as formSchemaChangePw } from '@/lib/validation/changePassword'
+import { formSchema as formSchemaResetPw } from '@/lib/validation/resetPassword'
 import { formSchema as formSchemaLogin } from '@/lib/validation/login'
 import { users, passwordResetTokens } from '@/lib/db/schema'
 import { getValidToken } from '@/lib/getValidToken'
 import { signIn, signOut, auth } from '@/auth'
+import { mailer } from '@/lib/email'
 import { db } from '@/lib/db'
-import { randomBytes } from 'crypto'
 
 /**
  * @description error codes here below:
@@ -171,7 +172,7 @@ export const passwordResetAction = async (
     const [user] = await db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, validation.data.email as string))
+      .where(eq(users.email, validation.data.email))
     if (!user) {
       /**
        * @description We just let the user know that if they do have an account
@@ -227,11 +228,21 @@ export const passwordResetAction = async (
         },
       })
 
-    // TODO: send user email
-    console.log(
-      'email with token html button link: ',
-      `http://localhost:3000/update-password?token=${passwordResetToken}`,
-    )
+    const resetHref = `${process.env.AUTH_TRUST_HOST}/update-password?token=${passwordResetToken}`
+
+    await mailer.sendMail({
+      from: 'test@resend.dev',
+      subject: 'Your password reset request',
+      to: validation.data.email,
+      html: `
+       <h1>Hi, ${validation.data.email} !</h1>
+       <p>
+       You have requested to reset your password. Here is your password reset link, this link will expire in 1 hour.
+       </p>
+       <br>
+       <a href="${resetHref}">${resetHref}</a>
+      `,
+    })
   } catch (err) {
     return {
       error: true,

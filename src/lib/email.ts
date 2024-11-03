@@ -1,0 +1,14 @@
+import nodemailer from 'nodemailer'
+
+/**
+ * @description the settings values are taken from the Resend settings for SMTP
+ * at https://resend.com/settings/smtp
+ */
+export const mailer = nodemailer.createTransport({
+  host: 'smtp.resend.com',
+  port: 587,
+  auth: {
+    user: 'resend',
+    pass: process.env.RESEND_API_KEY,
+  },
+})

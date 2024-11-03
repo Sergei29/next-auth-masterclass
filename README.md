@@ -15,6 +15,7 @@ Authentication feature implementation in the Next.js application
 - zod, react-hook-form
 - Chadcn UI, tailwind scc
 - Drizzle ORM, Postgres db hosted on Neon.
+- Mailing by [`nodemailer`](https://nodemailer.com/) SMTP with [`https://resend.com`](https://resend.com/)
 
 ## Database
 
