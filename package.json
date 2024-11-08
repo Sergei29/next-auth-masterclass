@@ -25,6 +25,8 @@
     "next": "15.0.1",
     "next-auth": "^5.0.0-beta.25",
     "nodemailer": "^6.9.16",
+    "otplib": "^12.0.1",
+    "qrcode.react": "^4.1.0",
     "react": "19.0.0-rc-69d4b800-20241021",
     "react-dom": "19.0.0-rc-69d4b800-20241021",
     "react-hook-form": "^7.53.1",

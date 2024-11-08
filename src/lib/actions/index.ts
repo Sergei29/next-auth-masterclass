@@ -3,6 +3,7 @@
 import { NeonDbError } from '@neondatabase/serverless'
 import { redirect } from 'next/navigation'
 import { compare, hash } from 'bcryptjs'
+import { authenticator } from 'otplib'
 import { randomBytes } from 'crypto'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
@@ -288,6 +289,114 @@ export const passwordUpdateAction = async (
     await db
       .delete(passwordResetTokens)
       .where(eq(passwordResetTokens.id, validToken.id))
+  } catch (err) {
+    return {
+      error: true,
+      message: getErrorMessage(err),
+    }
+  }
+}
+
+export const generate2FSecretAction = async () => {
+  try {
+    const session = await auth()
+    if (!session) {
+      throw new Error('Unauthorized')
+    }
+    const userId = parseInt(session.user?.id as string, 10)
+
+    const [user] = await db
+      .select({
+        twoFactorSecret: users.twoFactorSecret,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    let twoFactorSecret = user.twoFactorSecret
+    if (!twoFactorSecret) {
+      twoFactorSecret = authenticator.generateSecret()
+      await db
+        .update(users)
+        .set({
+          twoFactorSecret,
+        })
+        .where(eq(users.id, userId))
+    }
+
+    /**
+     * We're going to return two factor secret. And this key URI is going to construct a formatted string for us which includes the two factor secret but also includes information about the accounts that the user is trying to register with their authenticator app.
+     * On the FE, upon receiving this secret hash, we are going to display our QR code
+     */
+    return {
+      twoFactorSecret: authenticator.keyuri(
+        session.user?.email as string,
+        'Next Auth Masterclass',
+        twoFactorSecret,
+      ),
+    }
+  } catch (err) {
+    return {
+      error: true,
+      message: getErrorMessage(err),
+    }
+  }
+}
+
+export const activate2FAction = async (otp: string) => {
+  try {
+    const session = await auth()
+    if (!session) {
+      throw new Error('Unauthorized')
+    }
+    const userId = parseInt(session.user?.id as string, 10)
+    const [user] = await db
+      .select({
+        twoFactorSecret: users.twoFactorSecret,
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    if (user.twoFactorSecret) {
+      const isOtpValid = authenticator.check(otp, user.twoFactorSecret)
+      if (!isOtpValid) {
+        throw new Error('OTP is not valid or expired')
+      }
+
+      await db
+        .update(users)
+        .set({
+          twoFactorActivated: true,
+        })
+        .where(eq(users.id, userId))
+    }
+  } catch (err) {
+    return {
+      error: true,
+      message: getErrorMessage(err),
+    }
+  }
+}
+
+export const deactivate2FAction = async () => {
+  try {
+    const session = await auth()
+    if (!session) {
+      throw new Error('Unauthorized')
+    }
+    const userId = parseInt(session.user?.id as string, 10)
+    await db
+      .update(users)
+      .set({
+        twoFactorActivated: false,
+        twoFactorSecret: null,
+      })
+      .where(eq(users.id, userId))
   } catch (err) {
     return {
       error: true,
