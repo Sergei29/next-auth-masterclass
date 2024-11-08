@@ -120,7 +120,12 @@ const TwoFactorAuthForm = ({ isTwoFactorActivated }: Props): JSX.Element => {
               onCancel={() => {
                 setStep(2)
               }}
-            />
+            >
+              <p className="text-xs text-muted-foreground">
+                Please enter the one-time passcode from the Google Authenticator
+                app
+              </p>
+            </OTPForm>
           )}
         </div>
       )}

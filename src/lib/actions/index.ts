@@ -75,8 +75,44 @@ export const registerAction = async (
   }
 }
 
+/**
+ * @description to verify if user is required to
+ * do the 2FA authentication step
+ * in addition to login with credentials
+ */
+export const preLoginCheckAction = async (
+  credentials: z.infer<typeof formSchemaLogin>,
+) => {
+  try {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, credentials.email))
+
+    if (!user) {
+      throw new Error('Invalid credentials.')
+    }
+
+    const isPasswordCorrect = await compare(credentials.password, user.password)
+
+    if (!isPasswordCorrect) {
+      throw new Error('Invalid credentials.')
+    }
+
+    return {
+      twoFactorActivated: user.twoFactorActivated,
+    }
+  } catch (err) {
+    return {
+      error: true,
+      message: getErrorMessage(err),
+    }
+  }
+}
+
 export const loginWithCredentialsAction = async (
   formValues: z.infer<typeof formSchemaLogin>,
+  otp?: string,
 ) => {
   try {
     const validation = formSchemaLogin.safeParse(formValues)
@@ -87,7 +123,7 @@ export const loginWithCredentialsAction = async (
       )
     }
     const { email, password } = validation.data
-    await signIn('credentials', { email, password, redirect: false })
+    await signIn('credentials', { email, password, otp, redirect: false })
   } catch (err) {
     return {
       error: true,

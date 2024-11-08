@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { type ReactNode, useState } from 'react'
 import { REGEXP_ONLY_DIGITS } from 'input-otp'
 
 import {
@@ -13,28 +13,36 @@ import { Button } from '@/components/ui/button'
 
 interface Props {
   onSubmit: (otp: string) => Promise<void>
-  onCancel: () => void
+  onCancel?: () => void
+  children?: ReactNode
+  labelSubmit?: string
 }
 
-const OTPForm = ({ onSubmit, onCancel }: Props): JSX.Element => {
+const OTPForm = ({
+  onSubmit,
+  onCancel,
+  children,
+  labelSubmit,
+}: Props): JSX.Element => {
   const [otp, setOtp] = useState('')
 
   const handleOTPSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (otp.length !== 6) return
     await onSubmit(otp)
+    setOtp('')
   }
 
   const handleCancel = () => {
     setOtp('')
-    onCancel()
+    if (onCancel) {
+      onCancel()
+    }
   }
 
   return (
     <form onSubmit={handleOTPSubmit} className="flex flex-col gap-2">
-      <p className="text-xs text-muted-foreground">
-        Please enter the one-time passcode from the Google Authenticator app
-      </p>
+      {children}
       <InputOTP
         maxLength={6}
         pattern={REGEXP_ONLY_DIGITS}
@@ -54,11 +62,13 @@ const OTPForm = ({ onSubmit, onCancel }: Props): JSX.Element => {
         </InputOTPGroup>
       </InputOTP>
       <Button type="submit" disabled={otp.length !== 6}>
-        Submit and activate
+        {labelSubmit ?? 'Submit and activate'}
       </Button>
-      <Button onClick={handleCancel} type="button" variant="outline">
-        Cancel
-      </Button>
+      {onCancel && (
+        <Button onClick={handleCancel} type="button" variant="outline">
+          Cancel
+        </Button>
+      )}
     </form>
   )
 }
